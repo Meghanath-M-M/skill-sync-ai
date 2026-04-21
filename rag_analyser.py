@@ -1,37 +1,50 @@
 from langchain_community.vectorstores import FAISS
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings # Swapped back to HuggingFace
 from langchain_groq import ChatGroq 
+from langchain_community.llms import Ollama
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
+import streamlit as st
 import os
+# --- PASTE YOUR API KEY HERE FOR NOW ---
+
 
 def run_skill_analyzer(target_role, resume_text, db_path="faiss_index"):
     print(f"Starting analysis for role: {target_role}")
     
+    # Test LLM first
+    print("Testing LLM connectivity...")
+    if not test_llm():
+        raise Exception("LLM test failed - Ollama may not be responding")
+    
+    # Use hardcoded absolute path to ensure FAISS index is found
+    db_path = r"c:\Projects\faiss_index"
+    
     # 1. Load the Embedding Model and FAISS Database
     print("Loading vector database...")
     try:
-        # FIXED: Changed 'model' to 'model_name' for HuggingFace syntax
-        embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+        embeddings = HuggingFaceEmbeddings(model="all-MiniLM-L6-v2")
         print("✅ Embeddings model loaded")
     except Exception as e:
         print(f"❌ Error loading embeddings: {e}")
         raise
 
+    # Note: allow_dangerous_deserialization is required by FAISS for local loading
     try:
-        # FIXED: Relies entirely on the relative path "faiss_index"
         vector_db = FAISS.load_local(db_path, embeddings, allow_dangerous_deserialization=True)
         print("✅ FAISS database loaded successfully")
     except Exception as e:
         print(f"❌ Error loading FAISS database: {e}")
         raise
 
+    # 2. Initialize Llama (Assuming you are using Ollama)
     # 2. Initialize Groq LLM
     print("Connecting to Groq API...")
     try:
         llm = ChatGroq(
             temperature=0, 
-            model_name="llama3-8b-8192", 
+            model_name="llama3-8b-8192",
+            api_key=st.secrets["GROQ_API_KEY"]  # <-- THIS IS THE MAGIC LINE
         )
         print("✅ LLM initialized successfully")
     except Exception as e:
@@ -39,6 +52,7 @@ def run_skill_analyzer(target_role, resume_text, db_path="faiss_index"):
         raise 
 
     # 3. Design the Prompt Template
+    # This is where we force Llama to format the output exactly how you want it
     template = """
     You are an expert technical recruiter and career coach. 
     Use the following pieces of retrieved job descriptions to analyze the candidate's resume against their target role.
@@ -61,12 +75,14 @@ def run_skill_analyzer(target_role, resume_text, db_path="faiss_index"):
     Analysis:
     """
     
+    # We pass 'resume_context' as a partial variable so it injects dynamically
     prompt = PromptTemplate(
         template=template, 
         input_variables=["context", "input"]
     ).partial(resume_context=resume_text)
 
     # 4. Create the Retrieval Chain
+    # This automatically handles taking the question, searching FAISS, and passing it to the prompt
     retriever = vector_db.as_retriever(search_kwargs={"k": 3})
     qa_chain = (
         {"context": retriever, "input": RunnablePassthrough()}
@@ -79,8 +95,31 @@ def run_skill_analyzer(target_role, resume_text, db_path="faiss_index"):
     try:
         response = qa_chain.invoke(target_role)
         print("✅ Analysis completed successfully")
-        # FIXED: Extracts the plain text content from the Groq response object
-        return response.content 
+        return response
+    except AssertionError as e:
+        print(f"❌ FAISS dimension mismatch: {e}")
+        raise Exception(
+            "FAISS index dimension does not match current embeddings.\n"
+            "Please rebuild the FAISS database with the current embedding model."
+        )
     except Exception as e:
         print(f"❌ Error during analysis: {e}")
+        import traceback
+        traceback.print_exc()
         raise
+
+def test_llm():
+    """Test if LLM is working"""
+    try:
+        llm = Ollama(model="llama3:latest", temperature=0.1, timeout=30)
+        response = llm.invoke("Say 'Hello' in one word.")
+        print(f"LLM test response: {response}")
+        return True
+    except Exception as e:
+        print(f"LLM test failed: {e}")
+        return False
+    
+    # Make sure Ollama is running in your terminal before executing this!
+    
+    print("============= AI ANALYSIS =============")
+    print(final_output)
