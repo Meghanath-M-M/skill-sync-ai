@@ -3,6 +3,7 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_groq import ChatGroq 
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
+import streamlit as st
 import os
 
 def run_skill_analyzer(target_role, resume_text, db_path="faiss_index"):
@@ -31,7 +32,8 @@ def run_skill_analyzer(target_role, resume_text, db_path="faiss_index"):
     try:
         llm = ChatGroq(
             temperature=0, 
-            model_name="llama3-8b-8192", 
+            model_name="llama3-8b-8192",
+            api_key=st.secrets["GROQ_API_KEY"]  # <-- THIS IS THE MAGIC LINE
         )
         print("✅ LLM initialized successfully")
     except Exception as e:
