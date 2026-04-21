@@ -22,7 +22,7 @@ def load_single_document(file_path):
     """Load a single PDF (using pdfplumber) or text file"""
     if file_path.endswith('.pdf'):
         # FIXED: Using the variable 'file_path' and using PDFPlumberLoader
-        loader = PDFPlumberLoader("C:\Projects\resume.pdf") 
+        loader = PDFPlumberLoader(file_path) 
     else:
         loader = TextLoader(file_path)
     return loader.load()
