@@ -1,6 +1,6 @@
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
-from langchain_ollama import OllamaEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.documents import Document
 
 def create_and_save_vector_db(documents, save_path="faiss_index"):
@@ -32,7 +32,7 @@ def create_and_save_vector_db(documents, save_path="faiss_index"):
     # 2. Initialize the Embedding Model
     # Using Ollama with nomic-embed-text model
     print("Loading embedding model...")
-    embeddings = OllamaEmbeddings(model="nomic-embed-text:latest")
+    embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
     # 3. Create the FAISS Vector Database
     print("Converting text to vectors and building FAISS database...")
