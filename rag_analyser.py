@@ -32,7 +32,7 @@ def run_skill_analyzer(target_role, resume_text, db_path="faiss_index"):
     try:
         llm = ChatGroq(
             temperature=0, 
-            model_name="llama3-8b-8192",
+           model_name="llama-3.1-8b-instant",
             api_key=st.secrets["GROQ_API_KEY"]  # <-- THIS IS THE MAGIC LINE
         )
         print("✅ LLM initialized successfully")
