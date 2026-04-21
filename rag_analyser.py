@@ -13,7 +13,7 @@ def run_skill_analyzer(target_role, resume_text, db_path="faiss_index"):
     print("Loading vector database...")
     try:
         # FIXED: Changed 'model' to 'model_name' for HuggingFace syntax
-        embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+        embeddings = HuggingFaceEmbeddings()
         print("✅ Embeddings model loaded")
     except Exception as e:
         print(f"❌ Error loading embeddings: {e}")
