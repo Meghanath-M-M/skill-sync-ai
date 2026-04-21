@@ -1,9 +1,12 @@
 from langchain_community.vectorstores import FAISS
-from langchain_ollama import OllamaEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings # Swapped back to HuggingFace
+from langchain_groq import ChatGroq 
 from langchain_community.llms import Ollama
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 import os
+# --- PASTE YOUR API KEY HERE FOR NOW ---
+
 
 def run_skill_analyzer(target_role, resume_text, db_path="faiss_index"):
     print(f"Starting analysis for role: {target_role}")
@@ -19,7 +22,7 @@ def run_skill_analyzer(target_role, resume_text, db_path="faiss_index"):
     # 1. Load the Embedding Model and FAISS Database
     print("Loading vector database...")
     try:
-        embeddings = OllamaEmbeddings(model="nomic-embed-text:latest")
+        embeddings = HuggingFaceEmbeddings(model="all-MiniLM-L6-v2")
         print("✅ Embeddings model loaded")
     except Exception as e:
         print(f"❌ Error loading embeddings: {e}")
@@ -34,10 +37,16 @@ def run_skill_analyzer(target_role, resume_text, db_path="faiss_index"):
         raise
 
     # 2. Initialize Llama (Assuming you are using Ollama)
+    print("Connecting to Groq API...")
     print("Waking up Llama...")
     try:
         # Change "llama3:latest" to match the exact model name you pulled in Ollama
-        llm = Ollama(model="llama3:latest", temperature=0.1, timeout=120)  # Increased timeout to 2 minutes
+        llm = ChatGroq(
+        temperature=0, 
+        model_name="llama3-8b-8192", 
+       
+    )
+          # Increased timeout to 2 minutes
         print("✅ LLM initialized successfully")
     except Exception as e:
         print(f"❌ Error initializing LLM: {e}")
